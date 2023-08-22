@@ -1,0 +1,80 @@
+import time
+import requests
+import math
+import random
+
+TOKEN = "BBFF-w2XNEWPhNcvJer6jw5pbjOjIcCTprh"
+DEVICE_LABEL = "kage88-test"
+VARIABLE_LABEL_1 = "ultrasonic-kertas"
+VARIABLE_LABEL_2 = "ultrasonic-logam"
+VARIABLE_LABEL_3 = "ultrasnoic-others"
+VARIABLE_LABEL_4 = "ultrasonic-plastik"
+VARIABLE_LABEL_5 = "loadcell-plastik"
+VARIABLE_LABEL_6 = "loadcell-logam"
+VARIABLE_LABEL_7 = "loadcell-others"
+VARIABLE_LABEL_8 = "loadcell-kertas"
+
+def build_payload(variable_1, variable_2, variable_3, variable_4, variable_5, variable_6, variable_7, variable_8):
+    value_1 = random.randint(-10, 50)
+    value_2 = random.randint(0, 85)
+    value_3 = random.randint(0, 10)
+    value_4 = random.randint(10, 60)
+    value_5 = random.uniform(1, 2)  # Nilai tetap antara 1 dan 2 untuk "loadcell-plastik"
+    value_6 = random.uniform(1, 2)  # Nilai tetap antara 1 dan 2 untuk "loadcell-logam"
+    value_7 = random.uniform(1,2)  # Nilai tetap antara 1 dan 2 untuk "loadcell-others"
+    value_8 = random.uniform(1, 2)  # Nilai tetap antara 1 dan 2 untuk "loadcell-kertas"
+
+    lat = random.randrange(34, 36, 1) + random.randrange(1, 1000, 1) / 1000.0
+    lng = random.randrange(-83, -87, -1) + random.randrange(1, 1000, 1) / 1000.0
+
+    payload = {
+        variable_1: value_1,
+        variable_2: value_2,
+        variable_3: {
+            "value": value_3,
+            "context": {"lat": lat, "lng": lng}
+        },
+        variable_4: value_4,
+        variable_5: value_5,
+        variable_6: value_6,
+        variable_7: value_7,
+        variable_8: value_8
+    }
+
+    return payload
+
+def post_request(payload):
+    url = "https://industrial.api.ubidots.com"
+    url = "{}/api/v1.6/devices/{}".format(url, DEVICE_LABEL)
+    headers = {"X-Auth-Token": TOKEN, "Content-Type": "application/json"}
+
+    status = 400
+    attempts = 0
+    while status >= 400 and attempts <= 5:
+        req = requests.post(url=url, headers=headers, json=payload)
+        status = req.status_code
+        attempts += 1
+        time.sleep(1)
+
+    print(req.status_code, req.json())
+    if status >= 400:
+        print("[ERROR] Tidak dapat mengirim data setelah 5 percobaan, silakan periksa \
+            kredensial token dan koneksi internet Anda")
+        return False
+
+    print("[INFO] Permintaan berhasil, perangkat Anda diperbarui")
+    return True
+
+def main():
+    payload = build_payload(
+        VARIABLE_LABEL_1, VARIABLE_LABEL_2, VARIABLE_LABEL_3, VARIABLE_LABEL_4,
+        VARIABLE_LABEL_5, VARIABLE_LABEL_6, VARIABLE_LABEL_7, VARIABLE_LABEL_8)
+
+    print("[INFO] Mencoba mengirim data")
+    post_request(payload)
+    print("[INFO] Selesai")
+
+if __name__ == '__main__':
+    while True:
+        main()
+        time.sleep(1)
